@@ -1,0 +1,585 @@
+<!DOCTYPE html>
+<html lang="hi">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>श्री शिव शक्ति गोगा गोरक्ष पीठ — निर्माण कोष</title>
+<link href="https://fonts.googleapis.com/css2?family=Tiro+Devanagari+Hindi:ital@0;1&family=Noto+Sans+Devanagari:wght@300;400;500;600;700&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+<script src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+<script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+<script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+<style>
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+body {
+  background: #fdf6ee;
+  font-family: 'Noto Sans Devanagari', sans-serif;
+  min-height: 100vh;
+  color: #2a1a08;
+}
+#root { min-height: 100vh; }
+
+/* Scrollbar */
+::-webkit-scrollbar { width: 6px; }
+::-webkit-scrollbar-track { background: #fdf6ee; }
+::-webkit-scrollbar-thumb { background: #e8a430; border-radius: 3px; }
+
+/* Modal backdrop */
+.modal-backdrop {
+  position: fixed; inset: 0;
+  background: rgba(60,30,0,0.35);
+  backdrop-filter: blur(3px);
+  z-index: 999;
+  display: flex; align-items: center; justify-content: center;
+  padding: 20px;
+  animation: fadeIn 0.2s ease;
+}
+.modal-box {
+  background: #fff;
+  border-radius: 0;
+  border: 2px solid #e8a430;
+  width: 100%; max-width: 680px;
+  max-height: 80vh;
+  display: flex; flex-direction: column;
+  box-shadow: 8px 8px 0 #f5d99a;
+  animation: slideUp 0.25s ease;
+}
+.modal-header {
+  padding: 20px 24px 16px;
+  border-bottom: 1px solid #f5d99a;
+  display: flex; justify-content: space-between; align-items: center;
+  background: #fffbf3;
+}
+.modal-title {
+  font-family: 'Tiro Devanagari Hindi', serif;
+  font-size: 20px; color: #c47c0a;
+}
+.modal-close {
+  background: none; border: none;
+  font-size: 22px; cursor: pointer;
+  color: #c47c0a; line-height: 1;
+  padding: 0 4px;
+}
+.modal-body { overflow-y: auto; padding: 0; flex: 1; }
+.modal-total {
+  padding: 12px 24px;
+  background: #fffbf3;
+  border-bottom: 1px solid #f5d99a;
+  font-size: 13px; color: #8a6030;
+  font-family: 'DM Mono', monospace;
+}
+.modal-table { width: 100%; border-collapse: collapse; }
+.modal-table thead th {
+  padding: 10px 16px;
+  font-size: 11px; letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: #b08040;
+  background: #fffbf3;
+  position: sticky; top: 0;
+  border-bottom: 1px solid #f5d99a;
+  font-family: 'DM Mono', monospace;
+  text-align: left;
+}
+.modal-table tbody td {
+  padding: 11px 16px;
+  font-size: 13px;
+  border-bottom: 1px solid #fdf1e0;
+  vertical-align: middle;
+}
+.modal-table tbody tr:last-child td { border-bottom: none; }
+.modal-table tbody tr:hover td { background: #fffbf3; }
+
+@keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+@keyframes slideUp { from { transform: translateY(20px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
+@keyframes fadeUp { from { opacity: 0; transform: translateY(14px); } to { opacity: 1; transform: translateY(0); } }
+</style>
+</head>
+<body>
+<div id="root"></div>
+
+<script type="text/babel">
+const { useState, useEffect, useRef, useCallback } = React;
+
+const APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycby0X_jQFugb9t_WYHvnVFmwt_P3qP-el48I1xVLcQRe6XaaBh1wE-7GwxpNutO-g0Hh/exec';
+
+const SAFFRON = '#e07b00';
+const SAFFRON_DEEP = '#c46800';
+const SAFFRON_LIGHT = '#f5a623';
+const SAFFRON_BG = '#fff8ee';
+const GREEN = '#2e7d4f';
+const GREEN_BG = '#edf7f1';
+const RED = '#b03a2e';
+const RED_BG = '#fdf0ee';
+
+// ── DATE FORMATTER ──
+function formatDate(raw) {
+  if (!raw) return '—';
+  const d = new Date(raw);
+  if (isNaN(d)) return raw;
+  const days = ['रविवार','सोमवार','मंगलवार','बुधवार','गुरुवार','शुक्रवार','शनिवार'];
+  const months = ['जन','फ़र','मार्च','अप्रैल','मई','जून','जुलाई','अग','सितं','अक्टू','नव','दिसं'];
+  return `${days[d.getDay()]}, ${d.getDate()} ${months[d.getMonth()]}`;
+}
+
+// ── AMOUNT FORMATTER ──
+function fmt(n) {
+  n = Math.abs(n);
+  if (n >= 10000000) return '₹' + (n/10000000).toFixed(2) + ' करोड़';
+  if (n >= 100000)   return '₹' + (n/100000).toFixed(2) + ' लाख';
+  if (n >= 1000)     return '₹' + (n/1000).toFixed(1) + 'K';
+  return '₹' + n.toFixed(0);
+}
+
+// ── NORMALIZE ROW ──
+function normalizeRow(row) {
+  const keys = Object.keys(row);
+  const find = (...names) => {
+    for (const n of names) {
+      const k = keys.find(k => k.toLowerCase().includes(n));
+      if (k !== undefined) return (row[k] || '').toString().trim();
+    }
+    return '';
+  };
+  const amtRaw = find('amount','amt','rupee','rs','price','value','राशि','रकम');
+  return {
+    date:     find('date','din','tarikh','तारीख'),
+    category: find('category','cat','item','description','विवरण','श्रेणी','kaam','काम'),
+    type:     find('type','kind','प्रकार','income','expense'),
+    amount:   parseFloat(amtRaw.replace(/[₹,\s]/g,'')) || 0,
+    notes:    find('notes','note','remark','टिप्पणी'),
+  };
+}
+
+// ── MODAL ──
+function TxModal({ title, rows, onClose, color }) {
+  const total = rows.reduce((s,r) => s + r.amount, 0);
+  return (
+    <div className="modal-backdrop" onClick={onClose}>
+      <div className="modal-box" onClick={e => e.stopPropagation()}>
+        <div className="modal-header">
+          <span className="modal-title">{title}</span>
+          <button className="modal-close" onClick={onClose}>✕</button>
+        </div>
+        <div className="modal-total">
+          कुल: <strong style={{color, fontFamily:'DM Mono'}}>{fmt(total)}</strong>
+          &nbsp;·&nbsp; {rows.length} प्रविष्टियाँ
+        </div>
+        <div className="modal-body">
+          <table className="modal-table">
+            <thead>
+              <tr>
+                <th>तारीख</th>
+                <th>विवरण</th>
+                <th style={{textAlign:'right'}}>राशि</th>
+                <th>टिप्पणी</th>
+              </tr>
+            </thead>
+            <tbody>
+              {rows.length === 0 ? (
+                <tr><td colSpan="4" style={{textAlign:'center',padding:'32px',color:'#b08040'}}>कोई डेटा नहीं</td></tr>
+              ) : rows.map((r,i) => (
+                <tr key={i}>
+                  <td style={{fontFamily:'DM Mono',fontSize:'12px',color:'#9a7040',whiteSpace:'nowrap'}}>{formatDate(r.date)}</td>
+                  <td>{r.category || '—'}</td>
+                  <td style={{textAlign:'right',fontFamily:'DM Mono',fontWeight:'600',color}}>{fmt(r.amount)}</td>
+                  <td style={{fontSize:'12px',color:'#b08040'}}>{r.notes || '—'}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// ── KPI CARD ──
+function KpiCard({ label, value, sub, color, bg, onClick, icon }) {
+  return (
+    <div onClick={onClick} style={{
+      background: bg,
+      border: `1.5px solid ${color}30`,
+      borderTop: `3px solid ${color}`,
+      padding: '24px 20px',
+      cursor: onClick ? 'pointer' : 'default',
+      transition: 'all 0.18s',
+      position: 'relative',
+      animation: 'fadeUp 0.5s ease both',
+    }}
+    onMouseEnter={e => { if(onClick) { e.currentTarget.style.transform='translateY(-3px)'; e.currentTarget.style.boxShadow=`0 8px 24px ${color}20`; }}}
+    onMouseLeave={e => { e.currentTarget.style.transform='translateY(0)'; e.currentTarget.style.boxShadow='none'; }}
+    >
+      {onClick && (
+        <div style={{position:'absolute',top:'10px',right:'12px',fontSize:'10px',color:color,fontFamily:'DM Mono',opacity:0.7,letterSpacing:'0.06em'}}>
+          क्लिक करें ↗
+        </div>
+      )}
+      <div style={{fontFamily:'DM Mono',fontSize:'10px',letterSpacing:'0.14em',textTransform:'uppercase',color:'#9a7040',marginBottom:'12px'}}>
+        {icon} {label}
+      </div>
+      <div style={{fontFamily:'Tiro Devanagari Hindi, serif',fontSize:'30px',fontWeight:'700',color,lineHeight:1}}>
+        {value}
+      </div>
+      <div style={{marginTop:'8px',fontSize:'12px',color:'#b08040',fontFamily:'DM Mono'}}>{sub}</div>
+    </div>
+  );
+}
+
+// ── BAR CHART ──
+function BarChart({ data }) {
+  const ref = useRef(null);
+  const instRef = useRef(null);
+  useEffect(() => {
+    if (!ref.current || !data) return;
+    if (instRef.current) instRef.current.destroy();
+    instRef.current = new Chart(ref.current, {
+      type: 'bar',
+      data: {
+        labels: data.labels,
+        datasets: [
+          { label: 'आय', data: data.income, backgroundColor: '#2e7d4f30', borderColor: GREEN, borderWidth: 1.5 },
+          { label: 'व्यय', data: data.expense, backgroundColor: '#b03a2e20', borderColor: RED, borderWidth: 1.5 },
+        ]
+      },
+      options: {
+        responsive: true, maintainAspectRatio: false,
+        plugins: { legend: { labels: { color: '#9a7040', font: { family: 'DM Mono', size: 10 } } } },
+        scales: {
+          x: { ticks: { color: '#9a7040', font: { family: 'DM Mono', size: 10 } }, grid: { color: '#f5e8d0' } },
+          y: { ticks: { color: '#9a7040', font: { family: 'DM Mono', size: 10 },
+                        callback: v => '₹' + (v>=1000 ? (v/1000).toFixed(0)+'K' : v) },
+               grid: { color: '#f5e8d0' } }
+        }
+      }
+    });
+    return () => instRef.current?.destroy();
+  }, [data]);
+  return <canvas ref={ref} />;
+}
+
+// ── DONUT CHART ──
+function DonutChart({ data }) {
+  const ref = useRef(null);
+  const instRef = useRef(null);
+  useEffect(() => {
+    if (!ref.current || !data) return;
+    if (instRef.current) instRef.current.destroy();
+    const colors = [SAFFRON,'#e8590c','#c46800','#2e7d4f','#6a5acd','#b03a2e','#d4a017','#5b8c5a'];
+    instRef.current = new Chart(ref.current, {
+      type: 'doughnut',
+      data: {
+        labels: data.labels,
+        datasets: [{ data: data.values, backgroundColor: colors.slice(0,data.labels.length), borderWidth: 0, hoverOffset: 6 }]
+      },
+      options: {
+        responsive: true, maintainAspectRatio: false, cutout: '66%',
+        plugins: { legend: { position:'bottom', labels: { color:'#9a7040', font:{ family:'DM Mono', size:10 }, boxWidth:10, padding:10 } } }
+      }
+    });
+    return () => instRef.current?.destroy();
+  }, [data]);
+  return <canvas ref={ref} />;
+}
+
+// ── CATEGORY BARS ──
+function CatBars({ items }) {
+  if (!items || items.length === 0) return (
+    <div style={{textAlign:'center',padding:'32px',color:'#b08040',fontSize:'13px'}}>कोई व्यय नहीं</div>
+  );
+  const max = items[0]?.amt || 1;
+  return (
+    <div style={{display:'flex',flexDirection:'column',gap:'14px'}}>
+      {items.map(({cat,amt},i) => (
+        <div key={i}>
+          <div style={{display:'flex',justifyContent:'space-between',fontSize:'13px',marginBottom:'5px'}}>
+            <span style={{color:'#2a1a08'}}>{cat}</span>
+            <span style={{fontFamily:'DM Mono',fontSize:'12px',color:SAFFRON_DEEP}}>{fmt(amt)}</span>
+          </div>
+          <div style={{height:'3px',background:'#f5e0c0',position:'relative'}}>
+            <div style={{position:'absolute',top:0,left:0,height:'100%',background:SAFFRON,width:`${(amt/max*100).toFixed(1)}%`,transition:'width 0.8s cubic-bezier(.4,0,.2,1)'}} />
+          </div>
+        </div>
+      ))}
+    </div>
+  );
+}
+
+// ── MAIN APP ──
+function App() {
+  const [status, setStatus] = useState('loading'); // loading | ok | error
+  const [errorMsg, setErrorMsg] = useState('');
+  const [allData, setAllData] = useState([]);
+  const [modal, setModal] = useState(null); // null | 'income' | 'expense'
+  const [lastUpdated, setLastUpdated] = useState('');
+
+  const loadData = useCallback(async () => {
+    setStatus('loading');
+    try {
+      const res = await fetch(APPS_SCRIPT_URL);
+      if (!res.ok) throw new Error('HTTP ' + res.status);
+      const json = await res.json();
+      if (!Array.isArray(json)) throw new Error('Invalid data format');
+      const rows = json.map(normalizeRow).filter(r => r.amount > 0);
+      setAllData(rows);
+      setLastUpdated(new Date().toLocaleTimeString('hi-IN'));
+      setStatus('ok');
+    } catch (err) {
+      setErrorMsg(err.message);
+      setStatus('error');
+    }
+  }, []);
+
+  useEffect(() => { loadData(); }, []);
+
+  // ── COMPUTED ──
+  const income  = allData.filter(r => r.type.toLowerCase().includes('income'));
+  const expense = allData.filter(r => r.type.toLowerCase().includes('expense'));
+
+  const totalIncome  = income.reduce((s,r) => s+r.amount, 0);
+  const totalExpense = expense.reduce((s,r) => s+r.amount, 0);
+  const netProfit    = totalIncome - totalExpense;
+
+  const now = new Date();
+  const thisMonth = r => {
+    const d = new Date(r.date);
+    return !isNaN(d) && d.getMonth()===now.getMonth() && d.getFullYear()===now.getFullYear();
+  };
+  const monthNet = income.filter(thisMonth).reduce((s,r)=>s+r.amount,0) -
+                   expense.filter(thisMonth).reduce((s,r)=>s+r.amount,0);
+
+  // Monthly chart
+  const monthly = {};
+  allData.forEach(r => {
+    const d = new Date(r.date); if (isNaN(d)) return;
+    const key = `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}`;
+    if (!monthly[key]) monthly[key] = {income:0,expense:0};
+    if (r.type.toLowerCase().includes('income'))  monthly[key].income  += r.amount;
+    if (r.type.toLowerCase().includes('expense')) monthly[key].expense += r.amount;
+  });
+  const monthKeys = Object.keys(monthly).sort().slice(-10);
+  const hiMonths = ['जन','फ़र','मार्च','अप्रैल','मई','जून','जुलाई','अग','सित','अक्टू','नव','दिसं'];
+  const barData = {
+    labels: monthKeys.map(k => { const [y,m]=k.split('-'); return hiMonths[parseInt(m)-1]+" '"+y.slice(2); }),
+    income:  monthKeys.map(k => monthly[k].income),
+    expense: monthKeys.map(k => monthly[k].expense),
+  };
+
+  // Donut — income by category
+  const incCats = {};
+  income.forEach(r => { const c=r.category||'अन्य'; incCats[c]=(incCats[c]||0)+r.amount; });
+  const donutData = {
+    labels: Object.keys(incCats).slice(0,7),
+    values: Object.values(incCats).slice(0,7),
+  };
+
+  // Expense category bars
+  const expCats = {};
+  expense.forEach(r => { const c=r.category||'अन्य'; expCats[c]=(expCats[c]||0)+r.amount; });
+  const catItems = Object.entries(expCats).sort((a,b)=>b[1]-a[1]).slice(0,8).map(([cat,amt])=>({cat,amt}));
+
+  const card = (children, style={}) => (
+    <div style={{background:'#fff',border:'1.5px solid #f0d8b0',padding:'24px',...style}}>
+      {children}
+    </div>
+  );
+
+  const cardTitle = (text, sub) => (
+    <div style={{marginBottom:'18px'}}>
+      <div style={{fontFamily:'Tiro Devanagari Hindi, serif',fontSize:'16px',color:SAFFRON_DEEP}}>{text}</div>
+      {sub && <div style={{fontFamily:'DM Mono',fontSize:'10px',color:'#b08040',letterSpacing:'0.1em',marginTop:'3px'}}>{sub}</div>}
+    </div>
+  );
+
+  return (
+    <div style={{minHeight:'100vh',background:'#fdf6ee'}}>
+      {/* HEADER */}
+      <header style={{
+        background:'#fff',
+        borderBottom:'2px solid #f0d8b0',
+        padding:'20px 40px',
+        display:'flex', alignItems:'center', justifyContent:'space-between',
+        position:'relative',
+      }}>
+        <div style={{position:'absolute',bottom:0,left:40,width:60,height:'2.5px',background:SAFFRON}} />
+        <div>
+          <div style={{
+            fontFamily:'Tiro Devanagari Hindi, serif',
+            fontSize:'22px', fontWeight:'400',
+            color:SAFFRON_DEEP, letterSpacing:'0.02em',
+          }}>
+            🕉 श्री शिव शक्ति गोगा गोरक्ष पीठ
+          </div>
+          <div style={{fontFamily:'DM Mono',fontSize:'11px',color:'#b08040',marginTop:'4px',letterSpacing:'0.1em'}}>
+            मंदिर निर्माण — वित्त डैशबोर्ड
+          </div>
+        </div>
+        <div style={{display:'flex',alignItems:'center',gap:'14px'}}>
+          {lastUpdated && (
+            <span style={{fontFamily:'DM Mono',fontSize:'11px',color:'#b08040'}}>
+              अपडेट: {lastUpdated}
+            </span>
+          )}
+          <button onClick={loadData} style={{
+            background:'transparent',border:`1.5px solid ${SAFFRON}`,
+            color:SAFFRON,padding:'8px 18px',
+            fontFamily:'Noto Sans Devanagari',fontSize:'13px',
+            cursor:'pointer',transition:'all 0.18s',
+          }}
+          onMouseEnter={e=>{e.currentTarget.style.background=SAFFRON;e.currentTarget.style.color='#fff';}}
+          onMouseLeave={e=>{e.currentTarget.style.background='transparent';e.currentTarget.style.color=SAFFRON;}}
+          >↻ रिफ्रेश</button>
+        </div>
+      </header>
+
+      <main style={{padding:'32px 40px 20px'}}>
+
+        {/* LOADING */}
+        {status === 'loading' && (
+          <div style={{display:'flex',flexDirection:'column',alignItems:'center',justifyContent:'center',height:'300px',gap:'16px'}}>
+            <div style={{width:'36px',height:'36px',border:`3px solid #f0d8b0`,borderTopColor:SAFFRON,borderRadius:'50%',animation:'spin 0.8s linear infinite'}} />
+            <div style={{fontFamily:'Noto Sans Devanagari',color:'#b08040',fontSize:'14px'}}>डेटा लोड हो रहा है…</div>
+            <style>{`@keyframes spin { to { transform: rotate(360deg); } }`}</style>
+          </div>
+        )}
+
+        {/* ERROR */}
+        {status === 'error' && (
+          <div style={{background:'#fdf0ee',border:'1.5px solid #e07b0060',padding:'24px 28px',maxWidth:'500px',margin:'40px auto',textAlign:'center'}}>
+            <div style={{fontSize:'28px',marginBottom:'12px'}}>⚠️</div>
+            <div style={{fontFamily:'Tiro Devanagari Hindi, serif',fontSize:'17px',color:RED,marginBottom:'8px'}}>डेटा लोड नहीं हुआ</div>
+            <div style={{fontFamily:'DM Mono',fontSize:'12px',color:'#9a7040',marginBottom:'16px'}}>{errorMsg}</div>
+            <button onClick={loadData} style={{background:SAFFRON,border:'none',color:'#fff',padding:'10px 24px',fontFamily:'Noto Sans Devanagari',fontSize:'14px',cursor:'pointer'}}>
+              पुनः प्रयास करें
+            </button>
+          </div>
+        )}
+
+        {/* DASHBOARD */}
+        {status === 'ok' && (
+          <>
+            {/* KPI GRID */}
+            <div style={{display:'grid',gridTemplateColumns:'repeat(4,1fr)',gap:'1px',background:'#f0d8b0',border:'1px solid #f0d8b0',marginBottom:'28px'}}>
+              <KpiCard label="कुल आय" value={fmt(totalIncome)} sub={`${income.length} प्रविष्टियाँ`}
+                color={GREEN} bg={GREEN_BG} onClick={() => setModal('income')} icon="💚" />
+              <KpiCard label="कुल व्यय" value={fmt(totalExpense)} sub={`${expense.length} प्रविष्टियाँ`}
+                color={RED} bg={RED_BG} onClick={() => setModal('expense')} icon="🔴" />
+              <KpiCard label="शुद्ध लाभ / हानि" value={fmt(Math.abs(netProfit))}
+                sub={netProfit >= 0 ? '▲ बचत' : '▼ घाटा'}
+                color={netProfit>=0?GREEN:RED} bg={netProfit>=0?GREEN_BG:RED_BG} icon="⚖️" />
+              <KpiCard label="इस माह" value={fmt(Math.abs(monthNet))}
+                sub={monthNet >= 0 ? '▲ इस माह बचत' : '▼ इस माह घाटा'}
+                color={SAFFRON} bg={SAFFRON_BG} icon="📅" />
+            </div>
+
+            {/* CHARTS ROW */}
+            <div style={{display:'grid',gridTemplateColumns:'1.4fr 1fr',gap:'20px',marginBottom:'20px'}}>
+              {card(
+                <>
+                  {cardTitle('मासिक विवरण','आय एवं व्यय — माह दर माह')}
+                  <div style={{height:'230px'}}><BarChart data={barData} /></div>
+                </>
+              )}
+              {card(
+                <>
+                  {cardTitle('आय के स्रोत','श्रेणी अनुसार')}
+                  <div style={{height:'230px'}}><DonutChart data={donutData} /></div>
+                </>
+              )}
+            </div>
+
+            {/* BOTTOM ROW */}
+            <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:'20px'}}>
+              {/* TOTAL INCOME BOX — clickable */}
+              <div onClick={() => setModal('income')} style={{
+                background: GREEN_BG, border:`1.5px solid ${GREEN}40`,
+                borderTop:`3px solid ${GREEN}`, padding:'24px',
+                cursor:'pointer', transition:'all 0.18s',
+              }}
+              onMouseEnter={e=>{e.currentTarget.style.boxShadow=`0 6px 20px ${GREEN}20`;e.currentTarget.style.transform='translateY(-2px)';}}
+              onMouseLeave={e=>{e.currentTarget.style.boxShadow='none';e.currentTarget.style.transform='translateY(0)';}}
+              >
+                <div style={{display:'flex',justifyContent:'space-between',alignItems:'flex-start',marginBottom:'16px'}}>
+                  <div>
+                    <div style={{fontFamily:'Tiro Devanagari Hindi, serif',fontSize:'16px',color:GREEN}}>कुल आय विवरण</div>
+                    <div style={{fontFamily:'DM Mono',fontSize:'10px',color:'#6a9a7a',letterSpacing:'0.1em',marginTop:'3px'}}>सभी आय प्रविष्टियाँ देखें</div>
+                  </div>
+                  <span style={{fontFamily:'DM Mono',fontSize:'10px',color:GREEN,opacity:0.8}}>विस्तार ↗</span>
+                </div>
+                <div style={{fontFamily:'Tiro Devanagari Hindi, serif',fontSize:'36px',fontWeight:'700',color:GREEN}}>{fmt(totalIncome)}</div>
+                <div style={{marginTop:'16px',display:'flex',flexDirection:'column',gap:'8px'}}>
+                  {income.slice(-4).reverse().map((r,i) => (
+                    <div key={i} style={{display:'flex',justifyContent:'space-between',fontSize:'12px',borderBottom:'1px solid #c8e8d4',paddingBottom:'6px'}}>
+                      <span style={{color:'#2a6040'}}>{r.category || '—'}</span>
+                      <span style={{fontFamily:'DM Mono',color:GREEN}}>{fmt(r.amount)}</span>
+                    </div>
+                  ))}
+                  {income.length > 4 && (
+                    <div style={{fontSize:'12px',color:'#6a9a7a',fontFamily:'DM Mono',textAlign:'center',marginTop:'4px'}}>
+                      + {income.length - 4} और प्रविष्टियाँ
+                    </div>
+                  )}
+                </div>
+              </div>
+
+              {/* TOTAL EXPENSE BOX — clickable */}
+              <div onClick={() => setModal('expense')} style={{
+                background: RED_BG, border:`1.5px solid ${RED}30`,
+                borderTop:`3px solid ${RED}`, padding:'24px',
+                cursor:'pointer', transition:'all 0.18s',
+              }}
+              onMouseEnter={e=>{e.currentTarget.style.boxShadow=`0 6px 20px ${RED}15`;e.currentTarget.style.transform='translateY(-2px)';}}
+              onMouseLeave={e=>{e.currentTarget.style.boxShadow='none';e.currentTarget.style.transform='translateY(0)';}}
+              >
+                <div style={{display:'flex',justifyContent:'space-between',alignItems:'flex-start',marginBottom:'16px'}}>
+                  <div>
+                    <div style={{fontFamily:'Tiro Devanagari Hindi, serif',fontSize:'16px',color:RED}}>कुल व्यय विवरण</div>
+                    <div style={{fontFamily:'DM Mono',fontSize:'10px',color:'#b07070',letterSpacing:'0.1em',marginTop:'3px'}}>सभी व्यय प्रविष्टियाँ देखें</div>
+                  </div>
+                  <span style={{fontFamily:'DM Mono',fontSize:'10px',color:RED,opacity:0.8}}>विस्तार ↗</span>
+                </div>
+                <div style={{fontFamily:'Tiro Devanagari Hindi, serif',fontSize:'36px',fontWeight:'700',color:RED}}>{fmt(totalExpense)}</div>
+                <div style={{marginTop:'16px'}}>
+                  {cardTitle('शीर्ष व्यय श्रेणियाँ','',)}
+                  <CatBars items={catItems.slice(0,5)} />
+                </div>
+              </div>
+            </div>
+          </>
+        )}
+      </main>
+
+      {/* FOOTER */}
+      <footer style={{
+        textAlign:'center',
+        padding:'24px 40px 28px',
+        marginTop:'12px',
+        borderTop:'1px solid #f0d8b0',
+      }}>
+        <div style={{
+          fontFamily:'Tiro Devanagari Hindi, serif',
+          fontSize:'20px',
+          color:SAFFRON_DEEP,
+          letterSpacing:'0.06em',
+        }}>
+          🙏 जय 6411 सरकार 🙏
+        </div>
+        <div style={{fontFamily:'DM Mono',fontSize:'10px',color:'#c0a060',marginTop:'6px',letterSpacing:'0.1em'}}>
+          श्री शिव शक्ति गोगा गोरक्ष पीठ — निर्माण कोष
+        </div>
+      </footer>
+
+      {/* MODALS */}
+      {modal === 'income' && (
+        <TxModal title="💚 सभी आय प्रविष्टियाँ" rows={income} onClose={() => setModal(null)} color={GREEN} />
+      )}
+      {modal === 'expense' && (
+        <TxModal title="🔴 सभी व्यय प्रविष्टियाँ" rows={expense} onClose={() => setModal(null)} color={RED} />
+      )}
+    </div>
+  );
+}
+
+ReactDOM.createRoot(document.getElementById('root')).render(<App />);
+</script>
+</body>
+</html>
